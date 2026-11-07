@@ -1,22 +1,18 @@
 name: OpenWrt для Beelink Mini MXIII-II (S905X, p212)
 
-# Железо: Amlogic S905X, плата p212, 2 ГБ RAM, 16 ГБ eMMC, Ethernet 1 порт,
-# Wi-Fi AW-CM273SM. Заводская прошивка: Android 6.0.1, ядро 3.14.29.
-# DTB: meson-gxl-s905x-p212.dtb (по умолчанию для s905x в образах ophub).
-
 on:
   workflow_dispatch:
     inputs:
       openwrt_version:
         description: "Версия официального OpenWrt (rootfs armsr/armv8)"
         required: true
-        default: "24.10.2"
+        default: "24.10.4"
       kernel:
         description: "Ядро Linux (ветка): 6.12.y или 6.6.y"
         required: true
         default: "6.12.y"
       rootfs_size:
-        description: "Размер корневого раздела, МБ (eMMC 16 ГБ, хватит с запасом)"
+        description: "Размер корневого раздела, МБ"
         required: true
         default: "1024"
       hostname:
@@ -37,10 +33,13 @@ jobs:
       - name: Скачать официальный rootfs OpenWrt (armsr/armv8)
         run: |
           V="${{ inputs.openwrt_version }}"
+          F="openwrt-${V}-armsr-armv8-rootfs.tar.gz"
           mkdir -p openwrt-armsr
-          wget -q -O openwrt-armsr/openwrt-armsr-armv8-rootfs.tar.gz \
-            "https://downloads.openwrt.org/releases/${V}/targets/armsr/armv8/openwrt-${V}-armsr-armv8-generic-rootfs.tar.gz"
+          for BASE in "https://downloads.openwrt.org/releases/${V}/targets/armsr/armv8" "https://archive.openwrt.org/releases/${V}/targets/armsr/armv8"; do
+            if wget -nv -O openwrt-armsr/openwrt-armsr-armv8-rootfs.tar.gz "${BASE}/${F}"; then break; fi
+          done
           ls -lh openwrt-armsr
+          test -s openwrt-armsr/openwrt-armsr-armv8-rootfs.tar.gz
 
       - name: Настройки по умолчанию для этой приставки
         run: |
@@ -75,4 +74,4 @@ jobs:
           body: |
             Образ для Beelink Mini MXIII-II (Amlogic S905X, плата p212).
             DTB: meson-gxl-s905x-p212.dtb
-            Запись на флешку, загрузка через кнопку update, потом openwrt-install-amlogic.
+
